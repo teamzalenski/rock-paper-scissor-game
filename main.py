@@ -124,3 +124,8 @@ def parse_game(x, y):
 
 #### still needed:
 # some sort of widget that tells you what to play next round and lets you input the last game
+# that interface should generate just two numbers that represent K for what the player and the computer chose
+# parse_game(a, b) then generates the data structure LASTGAME that can be directly fed into 
+# posterior, alphas, i = bayesian_update(posterior, mu_x, mu_y, mu_z, alphas, LASTGAME, i)
+# to update the game state
+# generate_next_move(posterior, mu_x, mu_y) outputs the integer corresponding to the suggested next move
