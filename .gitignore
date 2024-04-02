@@ -1,1 +1,17 @@
 *.pyc
+.idea/
+.vscode/
+build/
+tmp/
+temp/
+.DS_Store
+logs/
+dist/
+.env
+data/
+wandb/
+*.cfg
+bin/
+lib/
+share/
+.history/
