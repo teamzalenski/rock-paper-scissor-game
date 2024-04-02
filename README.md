@@ -8,6 +8,7 @@ pip install -r requirements.txt
 ```
 # game data
 
+```
 file structure: text file that contains one line per game
 on each line are two integers between 0 and 2, separated by a space
 the first integer is what i chose, the second is what the computer chose
@@ -19,6 +20,7 @@ sample
 2 0
 2 1
 2 1 0
+```
 
 # execution
 
