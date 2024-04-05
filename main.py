@@ -19,11 +19,6 @@ class Game:
             return move2
         return move1
 
-    # define your algorithm here or define your own functions and procedure
-    def rock_paper_scissor(self, history=None):
-        # define your function here
-        pass
-
     # taken from the Dirichlet_Distribution_Visualization lab
     # create the matrices for mu1-3
     def create_mu_matrices(self, N_matrix_dim):
@@ -59,10 +54,10 @@ class Game:
         i += 1
         return posterior, alphas, i
 
-    # function that calculates mu1-3 and returns the best move best
+    # function that calculates mu1-3 and returns the best move based
     # on which is biggest
     def generate_next_move(self, posterior, mu_x, mu_y, i):
-        # find the max value in that slice
+        # find the max value in the slice that corresponds to the latest slice
         flattened_index = np.nanargmax(posterior[:, :, i - 1])
         # map the flattened index to a coordinate
         x, y = np.unravel_index(flattened_index, posterior[:, :, i - 1].shape)
@@ -132,8 +127,8 @@ class Game:
                 posterior, alphas, i = self.bayesian_update(posterior, 
                                                             mu_x, mu_y, mu_z, 
                                                             alphas, new_data, i)
-        my_move = self.generate_next_move(posterior, mu_x, mu_y, i)
-        print(f"{self.games_to_play - game - 1} games left. You should play {self.lookup_reversed[my_move]}")    
+            my_move = self.generate_next_move(posterior, mu_x, mu_y, i)
+            print(f"{self.games_to_play - game - 1} games left. You should play {self.lookup_reversed[my_move]}")    
 
 
 if __name__ == "__main__":
