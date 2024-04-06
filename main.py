@@ -4,11 +4,16 @@ from scipy.special import gamma
 
 
 class Game:
-    def __init__(self):
-        print("init")
+    def __init__(self, stats_file):
+        # set up some helper lookup structures to translate game moves
+        # 0=rock, 1=paper, 2=scissors
         self.lookup = {"rock": 0, "paper": 1, "scissors": 2}
         self.lookup_reversed = {v: k for k, v in self.lookup.items()}
+        # member variables to hold game state for priors
         self.games_to_play = 0
+        self.prior_stats = [0, 0, 0] # prior wins, losses, and draws
+
+        self.read_file(stats_file)
 
     # function that returns which one of two moves won
     # return -1 is round is a draw
@@ -18,6 +23,28 @@ class Game:
         if (move1 + 1) % 3 == move2:
             return move2
         return move1
+
+    # function that reads in a file with game records
+    # each game should be on its own line, and consist of two intergers separated
+    # by a space. the first column is the human player's move, the second
+    # is the computer's move. 0=rock, 1=paper, 2=scissors
+    def read_file(self, file):
+        game_data = np.loadtxt(file, dtype=int, delimiter=" ")
+        # process for stats
+        for game in game_data:
+            winner = self.get_winner(*game)
+            if winner == game[0]:  
+                self.prior_stats[0] += 1 # human won
+            elif winner == game[1]:
+                self.prior_stats[1] += 1 # computer won
+            else:
+                self.prior_stats[2] += 1 #draw
+
+        # map each game to the winner. draws don't do any good, so those will be discounted eventually
+        self.move_counts = Counter(map(lambda x: self.get_winner(*x), game_data))
+        # figure out how many slices we need for the posterior
+        self.games_to_play = sum(self.move_counts.values())
+
 
     # taken from the Dirichlet_Distribution_Visualization lab
     # create the matrices for mu1-3
@@ -74,7 +101,7 @@ class Game:
     # function that takes in a new game and generates new data from it
     # x is 0-2 and represents me for rock-scissors, y is the same for
     # the computer
-    # return a new data array of 0s with one element set to 1that can be
+    # return a new data array of 0s with one element set to 1 that can be
     # added in a bayesian iteration
     def parse_game(self, x, y):
         data = np.zeros(3)
@@ -82,21 +109,7 @@ class Game:
         return data
 
     def start(self):
-        # read in the file, convert each line into a tuple
-        with open("felix_data.txt", "r") as f:
-            games = []
-            lines = f.readlines()
-            for line in lines[:-1]:
-                # last line is the record, skip for processing games
-                games.append(tuple(map(int, line.strip().split())))
-            # process last line
-            record = tuple(map(lambda x: int, lines[-1].strip().split()))
-        # map each game to the winner. draws don't do any good, so those will be discounted eventually
-        counts = Counter(map(lambda x: self.get_winner(*x), games))
-        # figure out how many slices we need for the posterior
-        self.games_to_play = sum(counts.values())
-        # set up data structures based on
-        # Dirichlet_Distribution_Bayesian_Update
+        # set up data structures based on Dirichlet_Distribution_Bayesian_Update lab
         # set matrix dimensions for mu
         N_matrix_dim = 128
         # generate the meshgrid for mu_x, mu_y, and mu_z
@@ -104,18 +117,18 @@ class Game:
         # create data structure for alphas
         alphas = np.zeros(3)
         # create data structure for the posterior
-        posterior = np.zeros([len(mu_x), len(mu_x), self.games_to_play])
+        posterior = np.zeros([len(mu_x), len(mu_x), self.games_to_play + 1])
         # pull out the alphas for each K. be conservative, 
         # each K should be present, but who knows
         prior = np.zeros(3)
         for k in range(3):
-            if k in counts:
-                prior[k] = counts[k]
+            if k in self.move_counts:
+                prior[k] = self.move_counts[k]
         # we're on iteration 0
         i = 0
         # initialize with the prior
         posterior, alphas, i = self.bayesian_update(posterior, mu_x, mu_y, mu_z, alphas, prior, i)        
-        # Run your algorithm to play against the computer
+        # get the first move to play
         my_move = self.generate_next_move(posterior, mu_x, mu_y, i)
         print(f"You should play {self.lookup_reversed[my_move]}")
         for game in range(self.games_to_play):
@@ -128,9 +141,10 @@ class Game:
                                                             mu_x, mu_y, mu_z, 
                                                             alphas, new_data, i)
             my_move = self.generate_next_move(posterior, mu_x, mu_y, i)
-            print(f"{self.games_to_play - game - 1} games left. You should play {self.lookup_reversed[my_move]}")    
+            print(f"{self.games_to_play - game - 1} games left. alphas={alphas}. \
+                  You should play {self.lookup_reversed[my_move]}")
 
 
 if __name__ == "__main__":
-    game = Game()
+    game = Game(r"felix_data.txt")
     game.start()
